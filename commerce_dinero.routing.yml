@@ -1,0 +1,34 @@
+commerce_dinero.settings:
+  path: '/admin/commerce/config/dinero'
+  defaults:
+    _form: '\Drupal\commerce_dinero\Form\DineroSettingsForm'
+    _title: 'Dinero'
+  requirements:
+    _permission: 'administer commerce dinero'
+
+commerce_dinero.create_invoice:
+  path: '/admin/commerce/orders/{commerce_order}/dinero/create-invoice'
+  defaults:
+    _form: '\Drupal\commerce_dinero\Form\CreateInvoiceForm'
+    _title: 'Opret faktura i Dinero'
+  requirements:
+    _permission: 'create commerce dinero invoice'
+    _entity_access: 'commerce_order.view'
+    _custom_access: '\Drupal\commerce_dinero\Access\CreateInvoiceAccessCheck::check'
+  options:
+    parameters:
+      commerce_order:
+        type: entity:commerce_order
+
+commerce_dinero.invoice_pdf:
+  path: '/admin/commerce/orders/{commerce_order}/dinero/invoice.pdf'
+  defaults:
+    _controller: '\Drupal\commerce_dinero\Controller\InvoicePdfController::download'
+    _title: 'Dinero faktura'
+  requirements:
+    _entity_access: 'commerce_order.view'
+    _permission: 'create commerce dinero invoice'
+  options:
+    parameters:
+      commerce_order:
+        type: entity:commerce_order

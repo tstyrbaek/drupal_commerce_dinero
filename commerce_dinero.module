@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * @file
+ * Commerce Dinero module hooks.
+ */
+
+use Drupal\commerce_order\Entity\OrderInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_entity_operation().
+ */
+function commerce_dinero_entity_operation(EntityInterface $entity): array {
+  if ($entity->getEntityTypeId() !== 'commerce_order' || !($entity instanceof OrderInterface)) {
+    return [];
+  }
+
+  if ($entity->hasField('cart') && $entity->get('cart')->value) {
+    return [];
+  }
+
+  if (!\Drupal::currentUser()->hasPermission('create commerce dinero invoice')) {
+    return [];
+  }
+
+  /** @var \Drupal\commerce_dinero\Service\DineroInvoiceManager $invoice_manager */
+  $invoice_manager = \Drupal::service('commerce_dinero.invoice_manager');
+  if (!$invoice_manager->canCreateInvoice($entity)) {
+    return [];
+  }
+
+  $url = Url::fromRoute('commerce_dinero.create_invoice', [
+    'commerce_order' => $entity->id(),
+  ]);
+  if (!$url->access()) {
+    return [];
+  }
+
+  return [
+    'dinero_create_invoice' => [
+      'title' => t('Opret faktura i Dinero'),
+      'url' => $url,
+      'weight' => 55,
+    ],
+  ];
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function commerce_dinero_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display): void {
+  if ($entity->getEntityTypeId() !== 'commerce_order' || !($entity instanceof OrderInterface)) {
+    return;
+  }
+
+  $invoice_guid = (string) $entity->getData('commerce_dinero.invoice_guid');
+  if ($invoice_guid === '') {
+    return;
+  }
+
+  /** @var \Drupal\commerce_dinero\Service\DineroInvoiceManager $invoice_manager */
+  $invoice_manager = \Drupal::service('commerce_dinero.invoice_manager');
+  $invoice_manager->ensureInvoiceMetadata($entity);
+
+  /** @var \Drupal\commerce_dinero\Service\DineroInvoiceUrlBuilder $url_builder */
+  $url_builder = \Drupal::service('commerce_dinero.invoice_url_builder');
+
+  $link_attributes = [
+    'target' => '_blank',
+    'rel' => 'noopener noreferrer',
+  ];
+
+  $items = [];
+  $pdf_url = $url_builder->buildPdfUrl((int) $entity->id());
+  if ($url_builder->isInvoiceBooked($entity) && $pdf_url->access()) {
+    $items[] = [
+      '#type' => 'link',
+      '#title' => t('Download faktura (PDF)'),
+      '#url' => $pdf_url,
+      '#attributes' => $link_attributes,
+    ];
+  }
+  elseif ($pdf_url->access()) {
+    $items[] = t('PDF er tilgængelig, når fakturaen er bogført i Dinero.');
+  }
+
+  $invoiced_at = (int) $entity->getData('commerce_dinero.invoiced_at');
+  if ($invoiced_at > 0) {
+    $items[] = t('Sendt: @date', [
+      '@date' => \Drupal::service('date.formatter')->format($invoiced_at, 'short'),
+    ]);
+  }
+
+  $build['commerce_dinero'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['commerce-dinero-order-info']],
+    '#weight' => 50,
+    'heading' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h3',
+      '#value' => t('Sendt til Dinero'),
+    ],
+    'details' => [
+      '#theme' => 'item_list',
+      '#items' => $items,
+    ],
+  ];
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function commerce_dinero_views_data_alter(array &$data): void {
+  $data['commerce_order']['commerce_dinero_invoice_status'] = [
+    'title' => t('Dinero invoice status'),
+    'help' => t('Shows whether the order has a draft or booked invoice in Dinero.'),
+    'field' => [
+      'id' => 'commerce_dinero_invoice_status',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function commerce_dinero_cron(): void {
+  /** @var \Drupal\commerce_dinero\Service\DineroInvoiceManager $invoice_manager */
+  $invoice_manager = \Drupal::service('commerce_dinero.invoice_manager');
+  $invoice_manager->syncPendingInvoiceStatuses();
+}
+
+/**
+ * Implements hook_preprocess_commerce_order().
+ */
+function commerce_dinero_preprocess_commerce_order(array &$variables): void {
+  if (empty($variables['elements']['commerce_dinero'])) {
+    return;
+  }
+
+  $variables['order']['commerce_dinero'] = $variables['elements']['commerce_dinero'];
+}
+

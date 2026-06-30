@@ -1,0 +1,45 @@
+services:
+  commerce_dinero.token_manager:
+    class: Drupal\commerce_dinero\Service\DineroTokenManager
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@key.repository'
+      - '@state'
+      - '@logger.channel.commerce_dinero'
+
+  commerce_dinero.api_client:
+    class: Drupal\commerce_dinero\Service\DineroApiClient
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@commerce_dinero.token_manager'
+      - '@logger.channel.commerce_dinero'
+
+  commerce_dinero.contact_manager:
+    class: Drupal\commerce_dinero\Service\DineroContactManager
+    arguments:
+      - '@commerce_dinero.api_client'
+
+  commerce_dinero.order_invoice_mapper:
+    class: Drupal\commerce_dinero\Service\OrderInvoiceMapper
+    arguments:
+      - '@config.factory'
+
+  commerce_dinero.invoice_manager:
+    class: Drupal\commerce_dinero\Service\DineroInvoiceManager
+    arguments:
+      - '@commerce_dinero.api_client'
+      - '@commerce_dinero.contact_manager'
+      - '@commerce_dinero.order_invoice_mapper'
+      - '@event_dispatcher'
+      - '@logger.channel.commerce_dinero'
+      - '@datetime.time'
+      - '@entity_type.manager'
+
+  commerce_dinero.invoice_url_builder:
+    class: Drupal\commerce_dinero\Service\DineroInvoiceUrlBuilder
+
+  logger.channel.commerce_dinero:
+    parent: logger.channel_base
+    arguments: ['commerce_dinero']

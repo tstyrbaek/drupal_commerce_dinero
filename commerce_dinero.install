@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Commerce Dinero.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function commerce_dinero_install(): void {
+  commerce_dinero_add_orders_view_field();
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function commerce_dinero_requirements($phase): array {
+  $requirements = [];
+  if ($phase !== 'runtime') {
+    return $requirements;
+  }
+
+  if (!\Drupal::moduleHandler()->moduleExists('key')) {
+    $requirements['commerce_dinero_key'] = [
+      'title' => t('Commerce Dinero'),
+      'description' => t('The Key module is required to store Dinero credentials securely.'),
+      'severity' => REQUIREMENT_ERROR,
+    ];
+  }
+
+  return $requirements;
+}
+
+/**
+ * Adds Dinero status column to the Commerce orders overview.
+ */
+function commerce_dinero_update_9001(): void {
+  commerce_dinero_add_orders_view_field();
+}
+
+/**
+ * Adds the Dinero invoice status field to the commerce_orders view.
+ */
+function commerce_dinero_add_orders_view_field(): void {
+  $view = \Drupal::entityTypeManager()->getStorage('view')->load('commerce_orders');
+  if (!$view) {
+    return;
+  }
+
+  $display = &$view->getDisplay('default');
+  if (isset($display['display_options']['fields']['commerce_dinero_invoice_status'])) {
+    return;
+  }
+
+  $display['display_options']['fields']['commerce_dinero_invoice_status'] = [
+    'id' => 'commerce_dinero_invoice_status',
+    'table' => 'commerce_order',
+    'field' => 'commerce_dinero_invoice_status',
+    'relationship' => 'none',
+    'group_type' => 'group',
+    'admin_label' => '',
+    'plugin_id' => 'commerce_dinero_invoice_status',
+    'label' => 'Dinero',
+    'exclude' => FALSE,
+    'alter' => [
+      'alter_text' => FALSE,
+      'text' => '',
+      'make_link' => FALSE,
+      'path' => '',
+      'absolute' => FALSE,
+      'external' => FALSE,
+      'replace_spaces' => FALSE,
+      'path_case' => 'none',
+      'trim_whitespace' => FALSE,
+      'alt' => '',
+      'rel' => '',
+      'link_class' => '',
+      'prefix' => '',
+      'suffix' => '',
+      'target' => '',
+      'nl2br' => FALSE,
+      'max_length' => 0,
+      'word_boundary' => TRUE,
+      'ellipsis' => TRUE,
+      'more_link' => FALSE,
+      'more_link_text' => '',
+      'more_link_path' => '',
+      'strip_tags' => FALSE,
+      'trim' => FALSE,
+      'preserve_tags' => '',
+      'html' => FALSE,
+    ],
+    'element_type' => '',
+    'element_class' => '',
+    'element_label_type' => '',
+    'element_label_class' => '',
+    'element_label_colon' => TRUE,
+    'element_wrapper_type' => '',
+    'element_wrapper_class' => '',
+    'element_default_classes' => TRUE,
+    'empty' => '',
+    'hide_empty' => TRUE,
+    'empty_zero' => FALSE,
+    'hide_alter_empty' => TRUE,
+    'entity_type' => 'commerce_order',
+  ];
+
+  if (isset($display['display_options']['style']['options']['columns'])) {
+    $columns = $display['display_options']['style']['options']['columns'];
+    $new_columns = [];
+    foreach ($columns as $key => $column) {
+      $new_columns[$key] = $column;
+      if ($key === 'state') {
+        $new_columns['commerce_dinero_invoice_status'] = 'commerce_dinero_invoice_status';
+      }
+    }
+    $display['display_options']['style']['options']['columns'] = $new_columns;
+  }
+
+  if (isset($display['display_options']['style']['options']['info'])) {
+    $display['display_options']['style']['options']['info']['commerce_dinero_invoice_status'] = [
+      'sortable' => FALSE,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => TRUE,
+      'responsive' => 'priority-medium',
+    ];
+  }
+
+  $view->save();
+}
+

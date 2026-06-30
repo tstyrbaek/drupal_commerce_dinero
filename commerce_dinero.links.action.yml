@@ -1,0 +1,5 @@
+commerce_dinero.create_invoice:
+  route_name: commerce_dinero.create_invoice
+  title: 'Opret faktura i Dinero'
+  appears_on:
+    - entity.commerce_order.canonical

@@ -1,0 +1,6 @@
+commerce_dinero.settings:
+  title: 'Dinero'
+  description: 'Configure Dinero API credentials and invoice settings.'
+  route_name: commerce_dinero.settings
+  parent: commerce.configuration
+  weight: 55

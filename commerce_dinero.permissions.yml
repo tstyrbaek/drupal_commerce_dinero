@@ -1,0 +1,7 @@
+administer commerce dinero:
+  title: 'Administer Commerce Dinero'
+  restrict access: true
+
+create commerce dinero invoice:
+  title: 'Create Dinero invoice from order'
+  restrict access: true

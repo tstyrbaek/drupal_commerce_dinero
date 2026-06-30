@@ -1,0 +1,9 @@
+name: 'Commerce Dinero'
+type: module
+description: 'Creates draft invoices in Dinero from Drupal Commerce orders.'
+core_version_requirement: '^10 || ^11'
+package: Commerce
+dependencies:
+  - commerce:commerce_order
+  - drupal:key
+  - drupal:views
