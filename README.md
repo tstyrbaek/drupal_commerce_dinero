@@ -14,8 +14,53 @@ Modulet finder eller opretter en kontakt i Dinero, mapper ordrelinjer og fragt t
 
 ## Installation
 
+### Via Composer (anbefalet)
+
+Tilføj git-repository og pakken i projektets `composer.json`:
+
+```json
+{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/tstyrbaek/drupal_commerce_dinero.git"
+    }
+  ],
+  "require": {
+    "tstyrbaek/commerce_dinero": "^1.0"
+  },
+  "extra": {
+    "installer-paths": {
+      "web/modules/custom/{$name}": [
+        "type:drupal-custom-module"
+      ]
+    }
+  }
+}
+```
+
+Tilpas stien `web/modules/custom/{$name}` til dit projekts docroot (fx `PUBLIC/modules/custom/{$name}`).
+
+Installer og aktivér:
+
+```bash
+composer require tstyrbaek/commerce_dinero:^1.0
+drush en commerce_dinero -y
+```
+
+Indtil der er udgivet en versionstag (fx `1.0.0`) i git, kan du i stedet bruge:
+
+```bash
+composer require tstyrbaek/commerce_dinero:dev-main
+```
+
+### Manuel installation
+
 1. Placér modulet i `web/modules/custom/commerce_dinero`.
 2. Aktivér modulet: `drush en commerce_dinero -y`
+
+### Efter installation
+
 3. Giv relevante roller tilladelsen **Create Dinero invoice from order**.
 
 Ved installation tilføjes et **Dinero**-felt til ordreoversigten (`commerce_orders` view).

@@ -1,0 +1,12 @@
+{
+  "name": "tstyrbaek/commerce_dinero",
+  "type": "drupal-custom-module",
+  "description": "Creates draft invoices in Dinero from Drupal Commerce orders.",
+  "license": "GPL-2.0-or-later",
+  "version": "1.0.0",
+  "require": {
+    "drupal/core": "^10 || ^11",
+    "drupal/commerce": "^2",
+    "drupal/key": "^1"
+  }
+}
